@@ -1,0 +1,165 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexModArith.Prime
+public import HexGFqRing.PolynomialQuotient
+
+public section
+
+/-!
+Core finite-field wrapper definitions for executable `F_p[x] / (f)`.
+
+This module packages the quotient-ring representation from `HexGFqRing`
+into the `FiniteField` type, keeping the same reduced
+representatives and exposing explicit conversions back to the quotient and
+polynomial views.
+-/
+namespace Hex
+
+namespace GFqField
+
+-- `GFqRing.PolyQuotient` is a prime-modulus type.  Declarations whose binders
+-- mention it need the instance ambiently; `FiniteField` itself does not, since
+-- it derives one from the `_hp` it already carries.
+variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p] {hp : Hex.Nat.Prime p}
+
+/-- Executable finite-field elements are a thin wrapper around quotient-ring
+residues modulo an irreducible polynomial. -/
+structure FiniteField
+    (f : FpPoly p) (hf : 0 < FpPoly.degree f)
+    (_hp : Hex.Nat.Prime p) (_hirr : FpPoly.Irreducible f) where
+  /-- The underlying reduced quotient-ring residue backing this field element.
+
+  `GFqRing.PolyQuotient` is a prime-modulus type, and the witness it needs is
+  the `_hp` this structure already carries. Deriving the instance here rather
+  than demanding it from callers keeps `FiniteField`'s signature unchanged;
+  `ZMod64.PrimeModulus` is a `Prop`-valued class, so this instance and any
+  ambient one are definitionally equal. -/
+  toQuotient :
+    haveI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime _hp
+    GFqRing.PolyQuotient f hf
+
+/-- Field equality is decidable, and decided by comparing canonical
+representatives: elements are wrappers around reduced quotient values, so
+equality of the wrapped values is equality of the elements. -/
+instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
+    DecidableEq (FiniteField f hf hp hirr) := by
+  intro x y
+  match decEq x.toQuotient y.toQuotient with
+  | isTrue h =>
+      exact isTrue (by
+        cases x
+        cases y
+        cases h
+        rfl)
+  | isFalse h =>
+      exact isFalse (by
+        intro hxy
+        apply h
+        exact congrArg FiniteField.toQuotient hxy)
+
+/-- Wrap a quotient-ring element as a finite-field element. -/
+@[expose]
+def ofQuotient {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x : GFqRing.PolyQuotient f hf) : FiniteField f hf hp hirr :=
+  ⟨x⟩
+
+omit [ZMod64.PrimeModulus p] in
+/-- Reduce a polynomial into the finite field by reusing the quotient-ring
+constructor.
+
+The prime-modulus instance the quotient needs is derived from this
+constructor's own `hp`, so callers holding only a primality proof do not have to
+supply it a second time. -/
+@[expose]
+def ofPoly (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p)
+    (hirr : FpPoly.Irreducible f) (g : FpPoly p) : FiniteField f hf hp hirr :=
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  ofQuotient (GFqRing.ofPoly f hf g)
+
+/-- Project a finite-field element to its canonical polynomial representative. -/
+@[expose]
+def repr {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x : FiniteField f hf hp hirr) : FpPoly p :=
+  GFqRing.repr x.toQuotient
+
+/-- Projecting a wrapped quotient element returns the original quotient. -/
+@[simp, grind =] theorem toQuotient_ofQuotient
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x : GFqRing.PolyQuotient f hf) :
+    (ofQuotient x : FiniteField f hf hp hirr).toQuotient = x :=
+  rfl
+
+/-- Reducing a polynomial into the field projects to the quotient-ring reduction. -/
+@[simp, grind =] theorem toQuotient_ofPoly
+    (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p)
+    (hirr : FpPoly.Irreducible f) (g : FpPoly p) :
+    (ofPoly f hf hp hirr g).toQuotient = GFqRing.ofPoly f hf g :=
+  rfl
+
+/-- A wrapped quotient exposes the same canonical polynomial representative. -/
+@[simp, grind =] theorem repr_ofQuotient
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x : GFqRing.PolyQuotient f hf) :
+    repr (ofQuotient x : FiniteField f hf hp hirr) = GFqRing.repr x :=
+  rfl
+
+omit [ZMod64.PrimeModulus p] in
+/-- Rewrapping a field element through its quotient projection is the identity. -/
+@[simp, grind =] theorem ofQuotient_toQuotient
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x : FiniteField f hf hp hirr) :
+    ofQuotient x.toQuotient = x := by
+  cases x
+  rfl
+
+omit [ZMod64.PrimeModulus p] in
+/-- The representative of a polynomial coerced into the field is its reduced form. -/
+@[simp, grind =] theorem repr_ofPoly
+    (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p)
+    (hirr : FpPoly.Irreducible f) (g : FpPoly p) :
+    repr (ofPoly f hf hp hirr g) = GFqRing.reduceMod f g :=
+  rfl
+
+omit [ZMod64.PrimeModulus p] in
+/-- Canonical field representatives are reduced below the modulus degree. -/
+@[simp] theorem degree_repr_lt_degree
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x : FiniteField f hf hp hirr) :
+    FpPoly.degree (repr x) < FpPoly.degree f := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  exact GFqRing.degree_repr_lt_degree x.toQuotient
+
+omit [ZMod64.PrimeModulus p] in
+/-- Equality of field elements is equality of their quotient representatives. -/
+@[grind =] theorem toQuotient_inj
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    {x y : FiniteField f hf hp hirr} :
+    x.toQuotient = y.toQuotient ↔ x = y := by
+  constructor
+  · intro h
+    cases x
+    cases y
+    cases h
+    rfl
+  · intro h
+    exact congrArg FiniteField.toQuotient h
+
+omit [ZMod64.PrimeModulus p] in
+/-- Extensionality through quotient representatives. -/
+@[ext] theorem ext
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    {x y : FiniteField f hf hp hirr} (h : x.toQuotient = y.toQuotient) :
+    x = y := by
+  cases x
+  cases y
+  cases h
+  rfl
+
+end GFqField
+end Hex

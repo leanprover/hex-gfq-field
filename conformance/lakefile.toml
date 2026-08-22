@@ -13,7 +13,7 @@ path = ".."
 [[require]]
 name = "HexConway"
 git = "https://github.com/leanprover/hex-conway.git"
-rev = "cd871aff745dba0175a1937191a847ea0af70c54"
+rev = "e59bb81cf798d8fdeec3373249a34e8ee2874ea7"
 
 [[require]]
 name = "hex-test-kit"
