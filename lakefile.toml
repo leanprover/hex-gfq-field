@@ -1,0 +1,20 @@
+name = "hex-gfq-field"
+defaultTargets = ["HexGFqField"]
+
+leanOptions = [
+  { name = "doc.verso", value = true },
+  { name = "doc.verso.suggestions", value = false },
+]
+
+[[require]]
+name = "HexGFqRing"
+git = "https://github.com/leanprover/hex-gfq-ring.git"
+rev = "56dd5a199ee4a63710f68260eb82bc4c2aade9f7"
+
+[[require]]
+name = "HexBerlekamp"
+git = "https://github.com/leanprover/hex-berlekamp.git"
+rev = "80c55f4aa9311583a259850e0aeea3b2c8cccc68"
+
+[[lean_lib]]
+name = "HexGFqField"
