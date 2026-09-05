@@ -9,12 +9,12 @@ leanOptions = [
 [[require]]
 name = "HexGFqRing"
 git = "https://github.com/leanprover/hex-gfq-ring.git"
-rev = "67f7e1eb3b26464366080845f2b08722c789cfa9"
+rev = "5d6988368887a11b0a370c3140a7157dd77eebb7"
 
 [[require]]
 name = "HexBerlekamp"
 git = "https://github.com/leanprover/hex-berlekamp.git"
-rev = "588422f093eed407b03b65398b2c1bbc4595e4d6"
+rev = "c5126ce15c2d77ce2832eb1013840b2dacd91c12"
 
 [[lean_lib]]
 name = "HexGFqField"
