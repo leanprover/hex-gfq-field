@@ -9,17 +9,17 @@ leanOptions = [
 [[require]]
 name = "HexGFqRing"
 git = "https://github.com/leanprover/hex-gfq-ring.git"
-rev = "c8e9ae656852744edb51cdf11801248085a7a8d5"
+rev = "66328df93743f7a928c183f9c9d6c600185f1436"
 
 [[require]]
 name = "HexBerlekamp"
 git = "https://github.com/leanprover/hex-berlekamp.git"
-rev = "1abc06a7bf0a0fb570116f88df049a412df7187a"
+rev = "209314f5bbaf5d341c9240451e6bb144ffceaa00"
 
 [[require]]
 name = "HexModArith"
 git = "https://github.com/leanprover/hex-mod-arith.git"
-rev = "67c1559800bc1f62622165d3fe5d6d346661539d"
+rev = "b4d0be9f888af0ff79169423144599d649cd969a"
 
 [[lean_lib]]
 name = "HexGFqField"
